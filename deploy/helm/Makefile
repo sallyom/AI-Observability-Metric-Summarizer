@@ -129,13 +129,13 @@ install-metric-ui: namespace
 
 
 .PHONY: install-ui
-install-ui: namespace list-models-to-configmap install-prometheus install-metric-ui
+install-ui: install-metric-ui
 	@$(eval HELM_ARGS := $(call helm_llama_stack_args))
 
 	@echo "Waiting for deployment to be ready..."
 	@$(MAKE) wait
 
-install-gpu: install-llm-service-gpu install-ui
+install-gpu: install-ui
 install-cpu: install-llm-service-cpu install-ui
 
 .PHONY: install

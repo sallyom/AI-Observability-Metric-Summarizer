@@ -32,6 +32,11 @@ spec:
                 configMapKeyRef:
                   name: llm-models
                   key: models      
+            - name: TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.config.uwm-token-secret }}
+                  key: token
             # - name: DEEPINFRA_MODEL
             #   valueFrom:
             #     configMapKeyRef:

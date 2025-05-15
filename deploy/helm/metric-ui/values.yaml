@@ -1,8 +1,8 @@
 replicaCount: 1
 
 image:
-  repository: quay.io/ecosystem-appeng/metric-ui
-  tag: 0.45
+  repository: quay.io/sallyom/metric-summarizer
+  tag: uwm
 
 service:
   type: ClusterIP
@@ -13,7 +13,8 @@ route:
   host: ai-metrics-summarizer.example.com
 
 config:
-  PROMETHEUS_URL: ""
+  PROMETHEUS_URL: "https://thanos-querier.openshift-monitoring.svc.cluster.local:9091"
+  uwm-token-secret: "grafana-sa-token"
 
 llm:
   url: ""

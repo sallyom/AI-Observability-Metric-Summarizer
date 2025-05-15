@@ -10,6 +10,7 @@ import json
 PROMETHEUS_URL = os.getenv("PROMETHEUS_URL")
 LLM_URL = os.getenv("LLM_URL")
 LLM_API_TOKEN = os.getenv("LLM_API_TOKEN", "")
+PROMETHEUS_TOKEN = os.getenv("TOKEN", "")  # Add Prometheus token from environment
 LLM_MODEL_SUMMARIZATION = "meta-llama/Llama-3.2-3B-Instruct"
 model_list_json = os.getenv("LLM_MODELS", '["Unknown"]')
 model_names = json.loads(model_list_json)
@@ -33,6 +34,10 @@ def fetch_metrics(query, model_name, start, end):
     promql_query = f'{query}{{model_name="{model_name}"}}'
     step = "30s"
 
+    headers = {}
+    if PROMETHEUS_TOKEN:
+        headers["Authorization"] = f"Bearer {PROMETHEUS_TOKEN}"
+
     response = requests.get(
         f"{PROMETHEUS_URL}/api/v1/query_range",
         params={
@@ -41,6 +46,7 @@ def fetch_metrics(query, model_name, start, end):
             "end": end,
             "step": step
         },
+        headers=headers,
         verify=False
     )
     response.raise_for_status()
