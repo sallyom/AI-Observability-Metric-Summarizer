@@ -1,8 +1,8 @@
 replicaCount: 1
 
 image:
-  repository: quay.io/ecosystem-appeng/metric-mcp
-  tag: 0.11
+  repository: quay.io/sallyom/metric-mcp
+  tag: minikube
 
 service:
   type: ClusterIP
@@ -13,8 +13,8 @@ route:
   host: ai-metrics-summarizer.example.com
 
 config:
-  prometheusUrl: "https://thanos-querier.openshift-monitoring.svc.cluster.local:9091"
+  prometheusUrl: "http://prometheus-kube-prometheus-prometheus.llm-d-monitoring:9090"
 
 llm:
-  url: ""
+  url: "http://llm-d-inference-gateway.llm-d.svc.cluster.local:80"
   apiToken: ""

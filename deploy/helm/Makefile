@@ -91,10 +91,11 @@ depend:
 list-models: depend
 	@helm template dummy-release $(RAG_CHART) --set llm-service._debugListModels=true | grep ^model:
 
+#LLM_URL=$$(oc get inferenceservice llama-3-2-3b-instruct -n $(NAMESPACE) -o jsonpath='{.status.url}'); \
 .PHONY: install-metric-mcp
 install-metric-mcp: namespace
 	@echo "Extracting LLM service URL"
-	LLM_URL=$$(oc get inferenceservice llama-3-2-3b-instruct -n $(NAMESPACE) -o jsonpath='{.status.url}'); \
+	LLM_URL="http://llm-d-inference-gateway.llm-d.svc.cluster.local:80"
 	echo "Detected LLM_URL=$$LLM_URL"; \
 	helm upgrade --install $(METRIC_MCP_RELEASE_NAME) $(METRIC_MCP_CHART_PATH) \
 		-n $(NAMESPACE) \

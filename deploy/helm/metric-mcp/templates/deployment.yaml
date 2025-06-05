@@ -22,7 +22,8 @@ spec:
             - name: PROMETHEUS_URL
               value: "{{ .Values.config.prometheusUrl }}"
             - name: LLM_URL
-              value: "http://llama-3-2-3b-instruct-predictor.{{ .Release.Namespace }}.svc.cluster.local:8080"
+              value: "http://llm-d-inference-gateway.llm-d.svc.cluster.local:80"
+              #value: "http://llama-3-2-3b-instruct-predictor.{{ .Release.Namespace }}.svc.cluster.local:8080"
             - name: LLM_API_TOKEN
               value: "{{ .Values.llm.apiToken }}"
             - name: THANOS_TOKEN

@@ -8,7 +8,7 @@ service:
   port: 8501
 
 env:
-  PROMETHEUS_URL: "http://thanos-querier.openshift-monitoring.svc.cluster.local:9091"
-  LLM_URL: "http://llm-service:8012"
+  PROMETHEUS_URL: "http://prometheus-kube-prometheus-prometheus.llm-d-monitoring:9090"
+  LLM_URL: "http://llm-d-inference-gateway.llm-d.svc.cluster.local:80"
   LLM_API_TOKEN: ""
   MCP_API_URL: "http://metric-mcp-svc.{{ .Release.Namespace }}.svc.cluster.local:8000"

@@ -24,7 +24,7 @@ readinessProbe:
 
 env:
   - name: LLAMA_STACK_ENDPOINT
-    value: 'http://llamastack:8321'
+    value: 'http://llamastack.llama-stack.cluster.svc.local:8321'
 
 volumes:
   - emptyDir: {}

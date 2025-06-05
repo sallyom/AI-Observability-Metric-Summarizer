@@ -14,18 +14,6 @@ LLM_URL = os.getenv("LLM_URL", "http://localhost:8080")
 LLM_API_TOKEN = os.getenv("LLM_API_TOKEN", "")
 LLM_MODEL_SUMMARIZATION = "meta-llama/Llama-3.2-3B-Instruct"
 
-# Handle token input from volume or literal
-token_input = os.getenv("THANOS_TOKEN", "/var/run/secrets/kubernetes.io/serviceaccount/token")
-if os.path.exists(token_input):
-    with open(token_input, "r") as f:
-        THANOS_TOKEN = f.read().strip()
-else:
-    THANOS_TOKEN = token_input
-
-# CA bundle location (mounted via ConfigMap)
-CA_BUNDLE_PATH = "/etc/pki/ca-trust/extracted/pem/ca-bundle.crt"
-verify = CA_BUNDLE_PATH if os.path.exists(CA_BUNDLE_PATH) else True
-
 # --- Metric Queries ---
 ALL_METRICS = {
     "Prompt Tokens Created": "vllm:request_prompt_tokens_created",
@@ -56,12 +44,10 @@ def fetch_metrics(query, model_name, start, end):
         model_name = model_name.strip()
         promql_query = f'{query}{{model_name="{model_name}"}}'
 
-    headers = {"Authorization": f"Bearer {THANOS_TOKEN}"}
     response = requests.get(
         f"{PROMETHEUS_URL}/api/v1/query_range",
-        headers=headers,
         params={"query": promql_query, "start": start, "end": end, "step": "30s"},
-        verify=verify
+        verify=False
     )
     response.raise_for_status()
     result = response.json()["data"]["result"]
@@ -185,7 +171,7 @@ def summarize_with_llm(prompt: str) -> str:
         "temperature": 0.5,
         "max_tokens": 600
     }
-    response = requests.post(f"{LLM_URL}/v1/completions", headers=headers, json=payload, verify=verify)
+    response = requests.post(f"{LLM_URL}/v1/completions", headers=headers, json=payload, verify=False)
     response.raise_for_status()
     response_json = response.json()
     if "choices" not in response_json or not response_json["choices"]:
@@ -199,16 +185,14 @@ def health():
 @app.get("/models")
 def list_models():
     try:
-        headers = {"Authorization": f"Bearer {THANOS_TOKEN}"}
         response = requests.get(
             f"{PROMETHEUS_URL}/api/v1/series",
-            headers=headers,
             params={
                 "match[]": 'vllm:request_prompt_tokens_created',
                 "start": int((datetime.now().timestamp()) - 3600),
                 "end": int(datetime.now().timestamp())
             },
-            verify=verify
+            verify=False
         )
         response.raise_for_status()
         series = response.json()["data"]
