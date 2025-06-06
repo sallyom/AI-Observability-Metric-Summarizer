@@ -1,0 +1,36 @@
+replicaCount: 1
+
+image:
+  repository: quay.io/ecosystem-appeng/metric-mcp
+  tag: 0.11
+
+service:
+  type: ClusterIP
+  port: 8000
+
+# Ingress for EC2 - no host restrictions
+ingress:
+  enabled: true
+  className: nginx
+  # No host specified for EC2 - accepts all traffic
+
+# External services configuration
+config:
+  # User-provided Prometheus URL
+  prometheusUrl: "http://prometheus-kube-prometheus-prometheus.llm-d-monitoring:9090"
+
+llm:
+  # User-provided LLM URL
+  url: "http://llm-d-inference-gateway.llm-d.svc.cluster.local:80"
+  apiToken: ""
+
+# Minikube-specific settings (also works for EC2)
+minikube:
+  enabled: true
+  # Disable OpenShift-specific features
+  disableServiceAccountToken: true
+  disableTrustedCA: true
+
+# EC2-specific settings
+ec2:
+  enabled: true 

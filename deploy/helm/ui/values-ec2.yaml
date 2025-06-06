@@ -1,0 +1,29 @@
+image:
+  repository: quay.io/ecosystem-appeng/metric-ui
+  tag: tt1
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8501
+
+# Ingress for EC2 - no host restrictions
+ingress:
+  enabled: true
+  className: nginx
+  # No host specified for EC2 - accepts all traffic
+
+env:
+  # User-provided external Prometheus URL
+  PROMETHEUS_URL: "http://prometheus-kube-prometheus-prometheus.llm-d-monitoring:9090"
+  # User-provided external LLM URL  
+  LLM_URL: "http://llm-d-inference-gateway.llm-d.svc.cluster.local:80"
+  LLM_API_TOKEN: ""
+
+# Minikube-specific settings (also works for EC2)
+minikube:
+  enabled: true
+
+# EC2-specific settings
+ec2:
+  enabled: true 

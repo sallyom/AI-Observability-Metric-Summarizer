@@ -1,0 +1,32 @@
+replicaCount: 1
+
+image:
+  repository: quay.io/ecosystem-appeng/metric-mcp
+  tag: 0.11
+
+service:
+  type: ClusterIP
+  port: 8000
+
+# Ingress instead of Route for Minikube
+ingress:
+  enabled: true
+  className: nginx
+  host: ai-metrics-summarizer.local
+
+# External services configuration
+config:
+  # User-provided Prometheus URL
+  prometheusUrl: "http://prometheus-kube-prometheus-prometheus.llm-d-monitoring:9090"
+
+llm:
+  # User-provided LLM URL
+  url: "http://llm-d-inference-gateway.llm-d.svc.cluster.local:80"
+  apiToken: ""
+
+# Minikube-specific settings
+minikube:
+  enabled: true
+  # Disable OpenShift-specific features
+  disableServiceAccountToken: true
+  disableTrustedCA: true 

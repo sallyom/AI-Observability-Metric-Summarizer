@@ -1,3 +1,4 @@
+{{- if not (and .Values.minikube .Values.minikube.enabled) }}
 kind: Route
 apiVersion: route.openshift.io/v1
 metadata:
@@ -13,3 +14,4 @@ spec:
     termination: edge
     insecureEdgeTerminationPolicy: Redirect
   wildcardPolicy: None
+{{- end }}
