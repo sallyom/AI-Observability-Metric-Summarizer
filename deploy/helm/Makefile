@@ -76,6 +76,13 @@ help:
 	@echo "  uninstall     - Uninstall the RAG deployment and clean up resources"
 	@echo "  status        - Check status of the deployment"
 	@echo ""
+	@echo "Minikube-specific targets:"
+	@echo "  install-minikube-mcp     - Install metric-mcp for Minikube"
+	@echo "  install-minikube-ui      - Install metric-ui for Minikube"
+	@echo "  install-minikube         - Install both metric-mcp and metric-ui for Minikube"
+	@echo "  uninstall-minikube       - Uninstall Minikube deployments"
+	@echo "  status-minikube          - Check Minikube deployment status"
+	@echo ""
 	@echo "Configuration options (set via environment variables or make arguments):"
 	@echo "  NAMESPACE                - Target namespace (default: llama-stack-rag)"
 	@echo "  HF_TOKEN                 - Hugging Face Token (will prompt if not provided)"
@@ -87,6 +94,11 @@ help:
 	@echo "  CUSTOM_INGESTION_PIPELINE_VALUES - Custom ingestion pipeline values (full path)"
 	@echo "  CUSTOM_INGESTION_PIPELINE_NAME   - Custom ingestion pipeline name"
 	@echo "  LLAMA_STACK_ENV          - List of environment variables for llama-stack (eg. {TAVILY_SEARCH_API_KEY: \"<Your Tavily Search API Key here>\"})"
+	@echo ""
+	@echo "Minikube-specific configuration:"
+	@echo "  PROMETHEUS_URL           - Your Prometheus service URL"
+	@echo "  LLM_URL                  - Your VLLM/LLM service URL"
+	@echo "  LLM_API_TOKEN            - API token for your LLM service (if required)"
 
 
 # Create namespace and deploy
@@ -180,3 +192,74 @@ status:
 
 	@echo "Listing pvcs..."
 	oc get pvc -n $(NAMESPACE) || true
+
+# Minikube-specific targets
+.PHONY: namespace-minikube
+namespace-minikube:
+	@kubectl create namespace $(NAMESPACE) &> /dev/null || true
+	@kubectl config set-context --current --namespace=$(NAMESPACE) &> /dev/null || true
+
+.PHONY: install-minikube-mcp
+install-minikube-mcp: namespace-minikube
+	@echo "Installing metric-mcp for Minikube"
+	@if [ -z "$(PROMETHEUS_URL)" ] || [ -z "$(LLM_URL)" ]; then \
+		echo "Error: PROMETHEUS_URL and LLM_URL must be set"; \
+		echo "Example: make install-minikube-mcp PROMETHEUS_URL=http://prometheus.monitoring.svc.cluster.local:9090 LLM_URL=http://vllm-service.default.svc.cluster.local:8000"; \
+		exit 1; \
+	fi
+	@helm upgrade --install $(METRIC_MCP_RELEASE_NAME) $(METRIC_MCP_CHART_PATH) \
+		-n $(NAMESPACE) \
+		-f $(METRIC_MCP_CHART_PATH)/values-minikube.yaml \
+		--set config.prometheusUrl="$(PROMETHEUS_URL)" \
+		--set llm.url="$(LLM_URL)" \
+		$(if $(LLM_API_TOKEN),--set llm.apiToken="$(LLM_API_TOKEN)",)
+
+.PHONY: install-minikube-ui
+install-minikube-ui: namespace-minikube
+	@echo "Installing metric-ui for Minikube"
+	@if [ -z "$(PROMETHEUS_URL)" ] || [ -z "$(LLM_URL)" ]; then \
+		echo "Error: PROMETHEUS_URL and LLM_URL must be set"; \
+		echo "Example: make install-minikube-ui PROMETHEUS_URL=http://prometheus.monitoring.svc.cluster.local:9090 LLM_URL=http://vllm-service.default.svc.cluster.local:8000"; \
+		exit 1; \
+	fi
+	@helm upgrade --install $(METRIC_UI_RELEASE_NAME) $(METRIC_UI_CHART_PATH) \
+		-n $(NAMESPACE) \
+		-f $(METRIC_UI_CHART_PATH)/values-minikube.yaml \
+		--set env.PROMETHEUS_URL="$(PROMETHEUS_URL)" \
+		--set env.LLM_URL="$(LLM_URL)" \
+		$(if $(LLM_API_TOKEN),--set env.LLM_API_TOKEN="$(LLM_API_TOKEN)",)
+
+.PHONY: install-minikube
+install-minikube: install-minikube-mcp install-minikube-ui
+	@echo "Both metric-mcp and metric-ui installed for Minikube"
+	@echo ""
+	@echo "Add these entries to your /etc/hosts file:"
+	@echo "$$(minikube ip) ai-metrics-ui.local"
+	@echo "$$(minikube ip) ai-metrics-mcp.local"
+	@echo ""
+	@echo "Then access the application at:"
+	@echo "  UI: http://ai-metrics-ui.local"
+	@echo "  API: http://ai-metrics-mcp.local"
+
+.PHONY: uninstall-minikube
+uninstall-minikube:
+	@echo "Uninstalling Minikube deployments"
+	@helm -n $(NAMESPACE) uninstall $(METRIC_MCP_RELEASE_NAME) || true
+	@helm -n $(NAMESPACE) uninstall $(METRIC_UI_RELEASE_NAME) || true
+	@echo "Minikube deployments uninstalled"
+
+.PHONY: status-minikube
+status-minikube:
+	@echo "Checking Minikube deployment status..."
+	@echo "Pods:"
+	@kubectl get pods -n $(NAMESPACE) || true
+	@echo ""
+	@echo "Services:"
+	@kubectl get svc -n $(NAMESPACE) || true
+	@echo ""
+	@echo "Ingress:"
+	@kubectl get ingress -n $(NAMESPACE) || true
+	@echo ""
+	@echo "To check if ingress is working:"
+	@echo "  curl -H 'Host: ai-metrics-ui.local' http://$$(minikube ip)/"
+	@echo "  curl -H 'Host: ai-metrics-mcp.local' http://$$(minikube ip)/health"

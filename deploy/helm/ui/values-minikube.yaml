@@ -1,0 +1,29 @@
+image:
+  repository: quay.io/ecosystem-appeng/metric-ui
+  tag: tt1
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 8501
+
+# Ingress instead of Route for Minikube
+ingress:
+  enabled: true
+  className: nginx
+  host: ai-metrics-ui.local
+  annotations:
+    kubernetes.io/ingress.class: nginx
+
+env:
+  # User-provided external Prometheus URL
+  PROMETHEUS_URL: "http://prometheus.monitoring.svc.cluster.local:9090"
+  # User-provided external LLM URL  
+  LLM_URL: "http://vllm-service.default.svc.cluster.local:8000"
+  LLM_API_TOKEN: ""
+  # Internal MCP service URL
+  MCP_API_URL: "http://metric-mcp-svc.{{ .Release.Namespace }}.svc.cluster.local:8000"
+
+# Minikube-specific settings
+minikube:
+  enabled: true 
